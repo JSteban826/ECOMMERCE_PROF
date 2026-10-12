@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MapperUsuario {
 
-    public Usuario toUsuario(UsuarioData usuarioData){
+    public Usuario toUsuario(UsuarioData usuarioData) {
 
         Usuario usuario = new Usuario();
 
@@ -16,13 +16,13 @@ public class MapperUsuario {
         usuario.setCorreo(usuarioData.getCorreo());
         usuario.setClave(usuarioData.getClave());
         usuario.setRol(usuarioData.getRol());
-        usuario.setEdad(usuarioData.getEdad());
         usuario.setNumeroTelefonico(usuarioData.getNumeroTelefonico());
+        usuario.setEdad(usuarioData.getEdad());
 
         return usuario;
     }
 
-    public UsuarioData toData(Usuario usuario){
+    public UsuarioData toData(Usuario usuario) {
 
         UsuarioData usuarioData = new UsuarioData();
 
@@ -31,8 +31,8 @@ public class MapperUsuario {
         usuarioData.setCorreo(usuario.getCorreo());
         usuarioData.setClave(usuario.getClave());
         usuarioData.setRol(usuario.getRol());
-        usuarioData.setEdad(usuario.getEdad());
         usuarioData.setNumeroTelefonico(usuario.getNumeroTelefonico());
+        usuarioData.setEdad(usuario.getEdad());
 
         return usuarioData;
     }

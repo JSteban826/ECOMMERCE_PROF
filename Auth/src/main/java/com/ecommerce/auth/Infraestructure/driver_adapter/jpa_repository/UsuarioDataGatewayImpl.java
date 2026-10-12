@@ -1,13 +1,12 @@
 package com.ecommerce.auth.Infraestructure.driver_adapter.jpa_repository;
+
 import com.ecommerce.auth.Domain.model.Usuario;
 import com.ecommerce.auth.Domain.model.gateway.EncrypterGateway;
 import com.ecommerce.auth.Domain.model.gateway.UsuarioGateway;
-import com.ecommerce.auth.Infraestructure.mapper.MapperUsuario;
-
 import com.ecommerce.auth.Infraestructure.driver_adapter.UsuarioData;
+import com.ecommerce.auth.Infraestructure.mapper.MapperUsuario;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
-
 
 @Repository
 @RequiredArgsConstructor
@@ -19,47 +18,54 @@ public class UsuarioDataGatewayImpl implements UsuarioGateway {
 
     @Override
     public Usuario guardarusuario(Usuario usuario) {
+
         UsuarioData usuarioData = mapperUsuario.toData(usuario);
-        return mapperUsuario.toUsuario(repository.save(usuarioData));
+        UsuarioData usuarioGuardado = repository.save(usuarioData);
+
+        return mapperUsuario.toUsuario(usuarioGuardado);
     }
 
     @Override
     public Usuario buscarPorIdUsuario(String idUsuario) {
+
         return repository.findById(idUsuario)
-                .map(usuarioData -> mapperUsuario.toUsuario(usuarioData))
+                .map(mapperUsuario::toUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
     @Override
     public Usuario actualizarUsuario(Usuario usuario) {
-        UsuarioData usuarioData = mapperUsuario.toData(usuario);
 
-        if(!repository.existsById(usuario.getIdUsuario())){
-            throw new RuntimeException("Usuario con id " + usuario.getIdUsuario() + " no existe");
+        if (!repository.existsById(usuario.getIdUsuario())) {
+            throw new RuntimeException("Usuario con ID " + usuario.getIdUsuario() + " no existe"
+            );
         }
-        return mapperUsuario.toUsuario(repository.save(usuarioData));
+
+        UsuarioData usuarioData = mapperUsuario.toData(usuario);
+        UsuarioData usuarioActualizado = repository.save(usuarioData);
+
+        return mapperUsuario.toUsuario(usuarioActualizado);
     }
 
     @Override
     public void eliminarPorIdUsuario(String idUsuario) {
-        try {
-            repository.deleteById(idUsuario);
-        } catch (Exception error) {
-            throw new RuntimeException(error.getMessage());
+
+        if (!repository.existsById(idUsuario)) {
+            throw new RuntimeException("Usuario con ID " + idUsuario + " no existe");
         }
+
+        repository.deleteById(idUsuario);
     }
 
     @Override
     public Usuario login(String correo, String clave) {
 
         UsuarioData usuarioData = repository.findByCorreo(correo)
-                .orElseThrow(() ->
-                        new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        if (!encrypterGateway.checkPass(
-                clave,
-                usuarioData.getClave()
-        )) {
+        Boolean claveCorrecta = encrypterGateway.checkPass(clave, usuarioData.getClave());
+
+        if (!claveCorrecta) {
             throw new RuntimeException("Clave incorrecta");
         }
 

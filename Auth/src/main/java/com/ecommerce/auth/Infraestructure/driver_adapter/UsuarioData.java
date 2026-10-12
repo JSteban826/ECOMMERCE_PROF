@@ -1,32 +1,46 @@
 package com.ecommerce.auth.Infraestructure.driver_adapter;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.Length;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
 
-@AllArgsConstructor
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "usuarios")
 public class UsuarioData {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue
+    @UuidGenerator
+    @Column(name = "id_usuario", nullable = false, updatable = false
+    )
     private String idUsuario;
 
+    @Column(nullable = false)
     private Integer edad;
+
+    @Column(nullable = false, length = 100)
     private String nombre;
 
-    @Column(length = 100, nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 150)
     private String correo;
 
-    @Column(length = 100, nullable = false, unique = true)
+    @Column(nullable = false, length = 255)
     private String clave;
 
+    @Column(nullable = false, length = 20)
     private String rol;
 
+    @Column(name = "numero_telefonico", nullable = false, length = 10)
     private String numeroTelefonico;
 }

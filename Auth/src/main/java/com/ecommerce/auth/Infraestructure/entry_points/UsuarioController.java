@@ -14,32 +14,41 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UsuarioController {
 
-
     private final UsuarioUseCase usuarioUseCase;
 
     @PostMapping("/save")
-    public Usuario guardarUsuario(@RequestBody Usuario usuario) {
-        return usuarioUseCase.guardarUsuario(usuario);
+    public ResponseEntity<Usuario> guardarUsuario(@RequestBody Usuario usuario) {
+
+        Usuario usuarioGuardado = usuarioUseCase.guardarUsuario(usuario);
+
+        return new ResponseEntity<>(usuarioGuardado, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public Usuario buscarUsuario(@PathVariable String id) {
-        return usuarioUseCase.buscarUsuario(id);
+    public ResponseEntity<Usuario> buscarUsuario(@PathVariable String id) {
+
+        Usuario usuario = usuarioUseCase.buscarUsuario(id);
+
+        return new ResponseEntity<>(usuario, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-    public Usuario actualizarUsuario(
-            @PathVariable String id,
-            @RequestBody Usuario usuario) {
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable String id, @RequestBody Usuario usuario) {
 
         usuario.setIdUsuario(id);
-        return usuarioUseCase.actualizarUsuario(usuario);
+
+        Usuario usuarioActualizado = usuarioUseCase.actualizarUsuario(usuario);
+
+        return new ResponseEntity<>(usuarioActualizado, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public String eliminarUsuario(@PathVariable String id) {
+    public ResponseEntity<String> eliminarUsuario(@PathVariable String id) {
+
         usuarioUseCase.eliminarUsuario(id);
-        return "Usuario eliminado correctamente";
+
+        return new ResponseEntity<>("Usuario eliminado correctamente", HttpStatus.OK
+        );
     }
 
     @PostMapping("/login")
@@ -52,23 +61,19 @@ public class UsuarioController {
                     usuario.getClave()
             );
 
-            return new ResponseEntity<>(mensaje, HttpStatus.OK);
+            return new ResponseEntity<>(mensaje, HttpStatus.OK
+            );
 
         } catch (IllegalArgumentException e) {
 
-            return new ResponseEntity<>(
-                    e.getMessage(),
-                    HttpStatus.BAD_REQUEST
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST
             );
 
         } catch (RuntimeException e) {
 
-            return new ResponseEntity<>(
-                    e.getMessage(),
-                    HttpStatus.UNAUTHORIZED
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED
             );
         }
     }
 }
-
 

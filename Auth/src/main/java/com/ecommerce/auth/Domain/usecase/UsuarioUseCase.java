@@ -15,42 +15,48 @@ public class UsuarioUseCase {
 
     private final EncrypterGateway encrypterGateway;
 
-    public Usuario actualizarUsuario(Usuario usuario) {
+    private void validarUsuario(Usuario usuario) {
 
-        validarIdUsuario(usuario.getIdUsuario());
-        validarNombre(usuario);
-        validarCorreo(usuario);
-        validarClave(usuario);
-        validarRol(usuario);
-        validarNumeroTelefonico(usuario);
-        validarEdad(usuario);
+        validarNombre(usuario.getNombre());
+        validarCorreo(usuario.getCorreo());
+        validarClave(usuario.getClave());
+        validarRol(usuario.getRol());
+        validarNumeroTelefonico(usuario.getNumeroTelefonico());
+        validarEdad(usuario.getEdad());
 
-        return usuarioGateway.actualizarUsuario(usuario);
     }
-
 
     public Usuario guardarUsuario(Usuario usuario) {
 
-        validarNombre(usuario);
-        validarCorreo(usuario);
-        validarClave(usuario);
-        validarRol(usuario);
-        validarNumeroTelefonico(usuario);
-        validarEdad(usuario);
+        validarUsuario(usuario);
 
-        usuario.setClave(
-                encrypterGateway.encrypt(
-                        usuario.getClave()
-                )
+        usuario.setClave(encrypterGateway.encrypt(usuario.getClave())
         );
 
         return usuarioGateway.guardarusuario(usuario);
     }
 
+    public Usuario actualizarUsuario(Usuario usuario) {
+
+        validarIdUsuario(usuario.getIdUsuario());
+        validarUsuario(usuario);
+
+        usuario.setClave(encrypterGateway.encrypt(usuario.getClave()));
+
+        return usuarioGateway.actualizarUsuario(usuario);
+    }
+
     public Usuario buscarUsuario(String idUsuario) {
+
+        validarIdUsuario(idUsuario);
+
         return usuarioGateway.buscarPorIdUsuario(idUsuario);
     }
+
     public void eliminarUsuario(String idUsuario) {
+
+        validarIdUsuario(idUsuario);
+
         usuarioGateway.eliminarPorIdUsuario(idUsuario);
     }
 
@@ -59,72 +65,56 @@ public class UsuarioUseCase {
 
         Optional.ofNullable(idUsuario)
                 .filter(id -> !id.isBlank())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del usuario es obligatorio"));
+                .orElseThrow(() -> new IllegalArgumentException("El ID del usuario es obligatorio"));
     }
 
-    private void validarNombre(Usuario usuario) {
+    private void validarNombre(String nombre) {
 
-        Optional.ofNullable(usuario.getNombre())
-                .filter(nombre -> !nombre.isBlank())
-                .filter(nombre -> nombre.length() >= 3)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El nombre debe tener mínimo 3 caracteres"));
+        Optional.ofNullable(nombre)
+                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor.length() >= 3)
+                .orElseThrow(() -> new IllegalArgumentException("El nombre debe tener mínimo 3 caracteres"));
     }
 
-    private void validarCorreo(Usuario usuario) {
+    private void validarCorreo(String correo) {
 
-        Optional.ofNullable(usuario.getCorreo())
-                .filter(correo -> !correo.isBlank())
-                .filter(correo -> correo.matches(
-                        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El correo no es válido"));
+        Optional.ofNullable(correo)
+                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"))
+                .orElseThrow(() -> new IllegalArgumentException("El correo no es válido"));
     }
 
-    private void validarClave(Usuario usuario) {
+    private void validarClave(String clave) {
 
-        Optional.ofNullable(usuario.getClave())
-                .filter(clave -> !clave.isBlank())
-                .filter(clave -> clave.length() >= 8)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La clave debe tener mínimo 8 caracteres"));
+        Optional.ofNullable(clave)
+                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor.length() >= 8)
+                .orElseThrow(() -> new IllegalArgumentException("La clave debe tener mínimo 8 caracteres"));
     }
 
-    private void validarRol(Usuario usuario) {
+    private void validarRol(String rol) {
 
-        Optional.ofNullable(usuario.getRol())
-                .filter(rol -> !rol.isBlank())
-                .filter(rol ->
-                        rol.equals("ADMIN") ||
-                                rol.equals("USER"))
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El rol debe ser ADMIN o USER"));
+        Optional.ofNullable(rol)
+                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor.equals("ADMIN") || valor.equals("USER"))
+                .orElseThrow(() -> new IllegalArgumentException("El rol debe ser ADMIN o USER"));
     }
 
-    private void validarNumeroTelefonico(Usuario usuario) {
+    private void validarNumeroTelefonico(String numero) {
 
-        Optional.ofNullable(usuario.getNumeroTelefonico())
-                .filter(numero -> !numero.isBlank())
-                .filter(numero -> numero.matches("\\d{10}"))
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El número telefónico debe tener 10 dígitos"));
+        Optional.ofNullable(numero)
+                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor.matches("\\d{10}"))
+                .orElseThrow(() -> new IllegalArgumentException("El número telefónico debe tener 10 dígitos"));
     }
 
-    private void validarEdad(Usuario usuario) {
 
-        Optional.ofNullable(usuario.getEdad())
-                .filter(edad -> edad >= 18)
-                .filter(edad -> edad <= 120)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La edad debe estar entre 18 y 120 años"));
+    private void validarEdad(Integer edad) {
+
+        Optional.ofNullable(edad)
+                .filter(valor -> valor >= 18)
+                .filter(valor -> valor <= 120)
+                .orElseThrow(() -> new IllegalArgumentException("La edad debe estar entre 18 y 120 años"));
     }
 
 
@@ -133,13 +123,11 @@ public class UsuarioUseCase {
 
         Optional.ofNullable(correo)
                 .filter(valor -> !valor.isBlank())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("El correo es obligatorio"));
+                .orElseThrow(() -> new IllegalArgumentException("El correo es obligatorio"));
 
         Optional.ofNullable(clave)
                 .filter(valor -> !valor.isBlank())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("La clave es obligatoria"));
+                .orElseThrow(() -> new IllegalArgumentException("La clave es obligatoria"));
 
         usuarioGateway.login(correo, clave);
 
