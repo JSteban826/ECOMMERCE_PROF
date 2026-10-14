@@ -10,9 +10,9 @@ public interface ProductoGateway {
 
     Producto actualizarProducto(Producto producto);
 
-    Producto buscarPorIdProducto(String idProducto);
+    Producto buscarPorIdProducto(Long idProducto);
 
     List<Producto> listarProductos();
 
-    void eliminarPorIdProducto(String idProducto);
+    void eliminarPorIdProducto(Long idProducto);
 }

@@ -38,13 +38,12 @@ public class ProductoUseCase {
 
     public Producto actualizarProducto(Producto producto) {
 
-        Producto productoValidado =
-                Optional.ofNullable(producto)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Los datos del producto son obligatorios"
-                                )
-                        );
+        Producto productoValidado = Optional.ofNullable(producto)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Los datos del producto son obligatorios"
+                        )
+                );
 
         validarIdProducto(
                 productoValidado.getIdProducto()
@@ -61,7 +60,7 @@ public class ProductoUseCase {
         );
     }
 
-    public Producto buscarProducto(String idProducto) {
+    public Producto buscarProducto(Long idProducto) {
 
         validarIdProducto(idProducto);
 
@@ -83,7 +82,7 @@ public class ProductoUseCase {
         return productoGateway.listarProductos();
     }
 
-    public void eliminarProducto(String idProducto) {
+    public void eliminarProducto(Long idProducto) {
 
         validarIdProducto(idProducto);
 
@@ -94,13 +93,13 @@ public class ProductoUseCase {
         );
     }
 
-    private void validarIdProducto(String idProducto) {
+    private void validarIdProducto(Long idProducto) {
 
         Optional.ofNullable(idProducto)
-                .filter(valor -> !valor.isBlank())
+                .filter(valor -> valor > 0)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
-                                "El ID del producto es obligatorio"
+                                "El ID del producto debe ser mayor que cero"
                         )
                 );
     }
