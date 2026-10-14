@@ -18,6 +18,7 @@ public class MapperUsuario {
         usuario.setRol(usuarioData.getRol());
         usuario.setNumeroTelefonico(usuarioData.getNumeroTelefonico());
         usuario.setEdad(usuarioData.getEdad());
+        usuario.setSaldo(usuarioData.getSaldo());
 
         return usuario;
     }
@@ -33,6 +34,7 @@ public class MapperUsuario {
         usuarioData.setRol(usuario.getRol());
         usuarioData.setNumeroTelefonico(usuario.getNumeroTelefonico());
         usuarioData.setEdad(usuario.getEdad());
+        usuarioData.setSaldo(usuario.getSaldo());
 
         return usuarioData;
     }

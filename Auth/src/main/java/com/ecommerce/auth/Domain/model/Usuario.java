@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -18,4 +20,5 @@ public class Usuario {
     private String rol;
     private String numeroTelefonico;
     private Integer edad;
+    private BigDecimal saldo;// Bigdecimal se trabaja con dinero y este da un resultado
 }

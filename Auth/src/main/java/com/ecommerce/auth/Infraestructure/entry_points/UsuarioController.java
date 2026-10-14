@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/ecommerce/usuarios")
 @RequiredArgsConstructor
@@ -75,5 +77,41 @@ public class UsuarioController {
             );
         }
     }
+    @GetMapping("/{idUsuario}/saldo")
+    public ResponseEntity<BigDecimal> consultarSaldo(
+            @PathVariable String idUsuario
+    ) {
+        return ResponseEntity.ok(
+                usuarioUseCase.consultarSaldo(idUsuario)
+        );
+    }
+
+    @PutMapping("/{idUsuario}/saldo/recargar")
+    public ResponseEntity<Usuario> recargarSaldo(
+            @PathVariable String idUsuario,
+            @RequestBody BigDecimal valor
+    ) {
+        return ResponseEntity.ok(
+                usuarioUseCase.recargarSaldo(
+                        idUsuario,
+                        valor
+                )
+        );
+    }
+
+    @PutMapping("/{idUsuario}/saldo/descontar")
+    public ResponseEntity<Usuario> descontarSaldo(
+            @PathVariable String idUsuario,
+            @RequestBody BigDecimal valor
+    ) {
+        return ResponseEntity.ok(
+                usuarioUseCase.descontarSaldo(
+                        idUsuario,
+                        valor
+                )
+        );
+    }
+
+
 }
 

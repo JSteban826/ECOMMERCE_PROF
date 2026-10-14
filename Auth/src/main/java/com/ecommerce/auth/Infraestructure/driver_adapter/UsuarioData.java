@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,7 +24,7 @@ public class UsuarioData {
     @Id
     @GeneratedValue
     @UuidGenerator
-    @Column(name = "id_usuario", nullable = false, updatable = false
+    @Column (nullable = false, updatable = false
     )
     private String idUsuario;
 
@@ -41,6 +43,9 @@ public class UsuarioData {
     @Column(nullable = false, length = 20)
     private String rol;
 
-    @Column(name = "numero_telefonico", nullable = false, length = 10)
+    @Column(nullable = false, length = 10)
     private String numeroTelefonico;
+
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal saldo;
 }
