@@ -1,6 +1,10 @@
-package com.ecommerce.catalogo.aplication.config;
+package com.ecommerce.catalogo.aplication.config
+;
 
+import com.ecommerce.catalogo.Domain.model.gateway.CarritoGateway;
+import com.ecommerce.catalogo.Domain.model.gateway.ItemCarritoGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.ProductoGateway;
+import com.ecommerce.catalogo.Domain.usecase.CarritoUseCase;
 import com.ecommerce.catalogo.Domain.usecase.ProductoUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +17,22 @@ public class UseCaseConfig {
             ProductoGateway productoGateway
     ) {
 
-        return new ProductoUseCase(productoGateway);
+        return new ProductoUseCase(
+                productoGateway
+        );
+    }
+
+    @Bean
+    public CarritoUseCase carritoUseCase(
+            CarritoGateway carritoGateway,
+            ItemCarritoGateway itemCarritoGateway,
+            ProductoGateway productoGateway
+    ) {
+
+        return new CarritoUseCase(
+                carritoGateway,
+                itemCarritoGateway,
+                productoGateway
+        );
     }
 }
