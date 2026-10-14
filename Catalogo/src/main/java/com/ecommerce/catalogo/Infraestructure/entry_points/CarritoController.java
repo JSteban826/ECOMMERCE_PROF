@@ -87,6 +87,17 @@ public class CarritoController {
                 )
         );
     }
+    @PostMapping("/{idCarrito}/comprar")
+    public ResponseEntity<Carrito> comprarCarrito(
+            @PathVariable Long idCarrito
+    ) {
+
+        return ResponseEntity.ok(
+                carritoUseCase.comprarCarrito(
+                        idCarrito
+                )
+        );
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> manejarValidacion(
@@ -115,4 +126,5 @@ public class CarritoController {
                         )
                 );
     }
+
 }

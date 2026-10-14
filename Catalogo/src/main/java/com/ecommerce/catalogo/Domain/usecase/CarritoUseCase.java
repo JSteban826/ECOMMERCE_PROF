@@ -7,6 +7,8 @@ import com.ecommerce.catalogo.Domain.model.Producto;
 import com.ecommerce.catalogo.Domain.model.gateway.CarritoGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.ItemCarritoGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.ProductoGateway;
+import com.ecommerce.catalogo.Domain.model.gateway.AuthGateway;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
@@ -21,10 +23,14 @@ public class CarritoUseCase {
     private final CarritoGateway carritoGateway;
     private final ItemCarritoGateway itemCarritoGateway;
     private final ProductoGateway productoGateway;
-
+    private final AuthGateway authGateway;
     public Carrito crearCarrito(String idUsuario) {
 
         validarIdUsuario(idUsuario);
+
+
+        authGateway.validarUsuario(idUsuario);
+
         validarUsuarioSinCarritoActivo(idUsuario);
 
         Carrito carrito = new Carrito();
@@ -243,6 +249,100 @@ public class CarritoUseCase {
 
         return actualizarTotalCarrito(carrito);
     }
+    @Transactional
+    public Carrito comprarCarrito(
+            Long idCarrito
+    ) {
+
+        validarIdCarrito(idCarrito);
+
+        Carrito carrito = obtenerCarritoExistente(
+                idCarrito
+        );
+
+        validarCarritoActivo(carrito);
+
+        authGateway.validarUsuario(
+                carrito.getIdUsuario()
+        );
+
+        List<ItemCarrito> items =
+                itemCarritoGateway.listarPorCarrito(
+                        idCarrito
+                );
+
+        validarCarritoConProductos(items);
+
+        validarStockProductos(items);
+
+        BigDecimal total =
+                calcularTotal(items);
+
+        validarTotalCompra(total);
+
+        BigDecimal saldoUsuario =
+                authGateway.consultarSaldo(
+                        carrito.getIdUsuario()
+                );
+
+        validarSaldoCompra(
+                saldoUsuario,
+                total
+        );
+
+        String referenciaCompra =
+                "CARRITO-" + carrito.getIdCarrito();
+
+        carrito.setItems(items);
+        carrito.setTotal(total);
+        carrito.setEstado(
+                EstadoCarrito.PROCESANDO
+        );
+
+        carritoGateway.actualizarCarrito(
+                carrito
+        );
+
+        ejecutarDescuento(
+                carrito,
+                total,
+                referenciaCompra
+        );
+
+        try {
+
+            actualizarInventario(items);
+
+            carrito.setEstado(
+                    EstadoCarrito.COMPRADO
+            );
+
+            carrito.setFechaCompra(
+                    LocalDateTime.now()
+            );
+
+            Carrito carritoComprado =
+                    carritoGateway.actualizarCarrito(
+                            carrito
+                    );
+
+            carritoComprado.setItems(items);
+
+            return carritoComprado;
+
+        } catch (RuntimeException exception) {
+
+            compensarCompra(
+                    carrito,
+                    referenciaCompra
+            );
+
+            throw new IllegalArgumentException(
+                    "La compra no pudo completarse y el saldo fue revertido",
+                    exception
+            );
+        }
+    }
 
     private Carrito actualizarTotalCarrito(
             Carrito carrito
@@ -265,6 +365,62 @@ public class CarritoUseCase {
 
         return carritoActualizado;
     }
+    private void validarStockProductos(
+            List<ItemCarrito> items
+    ) {
+
+        items.forEach(item -> {
+
+            Producto producto =
+                    obtenerProductoExistente(
+                            item.getIdProducto()
+                    );
+
+            validarStock(
+                    producto.getStock(),
+                    item.getCantidad()
+            );
+        });
+    }
+    private void validarCarritoConProductos(
+            List<ItemCarrito> items
+    ) {
+
+        Optional.ofNullable(items)
+                .filter(lista -> !lista.isEmpty())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El carrito no contiene productos"
+                        )
+                );
+    }
+    private void actualizarInventario(
+            List<ItemCarrito> items
+    ) {
+
+        items.forEach(item -> {
+
+            Producto producto =
+                    obtenerProductoExistente(
+                            item.getIdProducto()
+                    );
+
+            validarStock(
+                    producto.getStock(),
+                    item.getCantidad()
+            );
+
+            Integer nuevoStock =
+                    producto.getStock()
+                            - item.getCantidad();
+
+            producto.setStock(nuevoStock);
+
+            productoGateway.actualizarProducto(
+                    producto
+            );
+        });
+    }
 
     private BigDecimal calcularSubtotal(
             BigDecimal precio,
@@ -274,6 +430,37 @@ public class CarritoUseCase {
         return precio.multiply(
                 BigDecimal.valueOf(cantidad)
         );
+    }
+    private void validarSaldoCompra(
+            BigDecimal saldo,
+            BigDecimal total
+    ) {
+
+        Optional.ofNullable(saldo)
+                .filter(valor ->
+                        valor.compareTo(total) >= 0
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Saldo insuficiente para realizar la compra"
+                        )
+                );
+    }
+    private void validarTotalCompra(
+            BigDecimal total
+    ) {
+
+        Optional.ofNullable(total)
+                .filter(valor ->
+                        valor.compareTo(
+                                BigDecimal.ZERO
+                        ) > 0
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El total de la compra debe ser mayor que cero"
+                        )
+                );
     }
 
     private BigDecimal calcularTotal(
@@ -360,6 +547,27 @@ public class CarritoUseCase {
                 });
     }
 
+    private void compensarCompra(
+            Carrito carrito,
+            String referenciaCompra
+    ) {
+
+        authGateway.revertirDescuento(
+                carrito.getIdUsuario(),
+                referenciaCompra
+        );
+
+        carrito.setEstado(
+                EstadoCarrito.ACTIVO
+        );
+
+        carrito.setFechaCompra(null);
+
+        carritoGateway.actualizarCarrito(
+                carrito
+        );
+    }
+
     private void validarCarritoActivo(
             Carrito carrito
     ) {
@@ -405,6 +613,37 @@ public class CarritoUseCase {
                         )
                 );
     }
+    private void ejecutarDescuento(
+            Carrito carrito,
+            BigDecimal total,
+            String referenciaCompra
+    ) {
+
+        try {
+
+            authGateway.descontarSaldo(
+                    carrito.getIdUsuario(),
+                    total,
+                    referenciaCompra
+            );
+
+        } catch (RuntimeException exception) {
+
+            carrito.setEstado(
+                    EstadoCarrito.ACTIVO
+            );
+
+            carritoGateway.actualizarCarrito(
+                    carrito
+            );
+
+            throw new IllegalArgumentException(
+                    "No fue posible descontar el saldo del usuario",
+                    exception
+            );
+        }
+    }
+
 
     private void validarIdCarrito(
             Long idCarrito

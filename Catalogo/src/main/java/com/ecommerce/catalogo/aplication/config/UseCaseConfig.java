@@ -1,6 +1,7 @@
 package com.ecommerce.catalogo.aplication.config
 ;
 
+import com.ecommerce.catalogo.Domain.model.gateway.AuthGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.CarritoGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.ItemCarritoGateway;
 import com.ecommerce.catalogo.Domain.model.gateway.ProductoGateway;
@@ -26,13 +27,14 @@ public class UseCaseConfig {
     public CarritoUseCase carritoUseCase(
             CarritoGateway carritoGateway,
             ItemCarritoGateway itemCarritoGateway,
-            ProductoGateway productoGateway
-    ) {
+            ProductoGateway productoGateway,
+            AuthGateway authGateway) {
 
         return new CarritoUseCase(
                 carritoGateway,
                 itemCarritoGateway,
-                productoGateway
+                productoGateway,
+                authGateway
         );
     }
 }
