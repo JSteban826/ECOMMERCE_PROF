@@ -1,9 +1,13 @@
 package com.ecommerce.auth.Domain.usecase;
 
+import com.ecommerce.auth.Domain.model.EstadoMovimientoSaldo;
+import com.ecommerce.auth.Domain.model.MovimientoSaldo;
 import com.ecommerce.auth.Domain.model.Usuario;
 import com.ecommerce.auth.Domain.model.gateway.EncrypterGateway;
+import com.ecommerce.auth.Domain.model.gateway.MovimientoSaldoGateway;
 import com.ecommerce.auth.Domain.model.gateway.UsuarioGateway;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -13,6 +17,7 @@ public class UsuarioUseCase {
 
     private final UsuarioGateway usuarioGateway;
     private final EncrypterGateway encrypterGateway;
+    private final MovimientoSaldoGateway movimientoSaldoGateway;
 
     private void validarUsuario(Usuario usuario) {
 
@@ -37,11 +42,12 @@ public class UsuarioUseCase {
 
         validarUsuario(usuario);
 
-        // Todo usuario nuevo comienza con saldo cero.
         usuario.setSaldo(BigDecimal.ZERO);
 
         usuario.setClave(
-                encrypterGateway.encrypt(usuario.getClave())
+                encrypterGateway.encrypt(
+                        usuario.getClave()
+                )
         );
 
         return usuarioGateway.guardarusuario(usuario);
@@ -56,15 +62,21 @@ public class UsuarioUseCase {
                         )
                 );
 
-        validarIdUsuario(usuarioValidado.getIdUsuario());
-        validarUsuario(usuarioValidado);
-
-        Usuario usuarioExistente = obtenerUsuarioExistente(
+        validarIdUsuario(
                 usuarioValidado.getIdUsuario()
         );
 
+        validarUsuario(usuarioValidado);
+
+        Usuario usuarioExistente =
+                obtenerUsuarioExistente(
+                        usuarioValidado.getIdUsuario()
+                );
+
         usuarioValidado.setSaldo(
-                obtenerSaldoActual(usuarioExistente.getSaldo())
+                obtenerSaldoActual(
+                        usuarioExistente.getSaldo()
+                )
         );
 
         usuarioValidado.setClave(
@@ -89,19 +101,22 @@ public class UsuarioUseCase {
 
         validarIdUsuario(idUsuario);
 
-        /*
-         * Primero valida que el usuario exista.
-         */
         obtenerUsuarioExistente(idUsuario);
 
-        usuarioGateway.eliminarPorIdUsuario(idUsuario);
+        usuarioGateway.eliminarPorIdUsuario(
+                idUsuario
+        );
     }
 
-    public BigDecimal consultarSaldo(String idUsuario) {
+    public BigDecimal consultarSaldo(
+            String idUsuario
+    ) {
 
         Usuario usuario = buscarUsuario(idUsuario);
 
-        return obtenerSaldoActual(usuario.getSaldo());
+        return obtenerSaldoActual(
+                usuario.getSaldo()
+        );
     }
 
     public Usuario recargarSaldo(
@@ -114,38 +129,129 @@ public class UsuarioUseCase {
 
         Usuario usuario = buscarUsuario(idUsuario);
 
-        BigDecimal saldoActual = obtenerSaldoActual(
-                usuario.getSaldo()
-        );
+        BigDecimal saldoActual =
+                obtenerSaldoActual(
+                        usuario.getSaldo()
+                );
 
-        BigDecimal nuevoSaldo = saldoActual.add(valor);
+        BigDecimal nuevoSaldo =
+                saldoActual.add(valor);
 
         usuario.setSaldo(nuevoSaldo);
 
-        return usuarioGateway.actualizarUsuario(usuario);
+        return usuarioGateway.actualizarUsuario(
+                usuario
+        );
     }
 
+    @Transactional
     public Usuario descontarSaldo(
             String idUsuario,
-            BigDecimal valor
+            BigDecimal valor,
+            String referenciaCompra
     ) {
 
         validarIdUsuario(idUsuario);
         validarValorSaldo(valor);
+        validarReferenciaCompra(referenciaCompra);
+        validarReferenciaNoProcesada(
+                referenciaCompra
+        );
 
         Usuario usuario = buscarUsuario(idUsuario);
 
-        BigDecimal saldoActual = obtenerSaldoActual(
-                usuario.getSaldo()
+        BigDecimal saldoActual =
+                obtenerSaldoActual(
+                        usuario.getSaldo()
+                );
+
+        validarSaldoSuficiente(
+                saldoActual,
+                valor
         );
 
-        validarSaldoSuficiente(saldoActual, valor);
-
-        BigDecimal nuevoSaldo = saldoActual.subtract(valor);
+        BigDecimal nuevoSaldo =
+                saldoActual.subtract(valor);
 
         usuario.setSaldo(nuevoSaldo);
 
-        return usuarioGateway.actualizarUsuario(usuario);
+        Usuario usuarioActualizado =
+                usuarioGateway.actualizarUsuario(
+                        usuario
+                );
+
+        MovimientoSaldo movimientoSaldo =
+                new MovimientoSaldo();
+
+        movimientoSaldo.setIdUsuario(idUsuario);
+        movimientoSaldo.setValor(valor);
+
+        movimientoSaldo.setReferenciaCompra(
+                referenciaCompra
+        );
+
+        movimientoSaldo.setEstado(
+                EstadoMovimientoSaldo.DESCONTADO
+        );
+
+        movimientoSaldoGateway.guardarMovimiento(
+                movimientoSaldo
+        );
+
+        return usuarioActualizado;
+    }
+
+    @Transactional
+    public Usuario revertirDescuento(
+            String idUsuario,
+            String referenciaCompra
+    ) {
+
+        validarIdUsuario(idUsuario);
+        validarReferenciaCompra(referenciaCompra);
+
+        MovimientoSaldo movimientoSaldo =
+                obtenerMovimientoExistente(
+                        referenciaCompra
+                );
+
+        validarMovimientoDelUsuario(
+                movimientoSaldo,
+                idUsuario
+        );
+
+        validarMovimientoDescontado(
+                movimientoSaldo
+        );
+
+        Usuario usuario = buscarUsuario(idUsuario);
+
+        BigDecimal saldoActual =
+                obtenerSaldoActual(
+                        usuario.getSaldo()
+                );
+
+        BigDecimal nuevoSaldo =
+                saldoActual.add(
+                        movimientoSaldo.getValor()
+                );
+
+        usuario.setSaldo(nuevoSaldo);
+
+        Usuario usuarioActualizado =
+                usuarioGateway.actualizarUsuario(
+                        usuario
+                );
+
+        movimientoSaldo.setEstado(
+                EstadoMovimientoSaldo.REVERTIDO
+        );
+
+        movimientoSaldoGateway.guardarMovimiento(
+                movimientoSaldo
+        );
+
+        return usuarioActualizado;
     }
 
     private Usuario obtenerUsuarioExistente(
@@ -165,13 +271,100 @@ public class UsuarioUseCase {
                 );
     }
 
-    private void validarIdUsuario(String idUsuario) {
+    private MovimientoSaldo obtenerMovimientoExistente(
+            String referenciaCompra
+    ) {
+
+        return Optional.ofNullable(
+                        movimientoSaldoGateway
+                                .buscarPorReferenciaCompra(
+                                        referenciaCompra
+                                )
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "No existe un movimiento con la referencia: "
+                                        + referenciaCompra
+                        )
+                );
+    }
+
+    private void validarIdUsuario(
+            String idUsuario
+    ) {
 
         Optional.ofNullable(idUsuario)
                 .filter(id -> !id.isBlank())
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "El ID del usuario es obligatorio"
+                        )
+                );
+    }
+
+    private void validarReferenciaCompra(
+            String referenciaCompra
+    ) {
+
+        Optional.ofNullable(referenciaCompra)
+                .filter(valor -> !valor.isBlank())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "La referencia de compra es obligatoria"
+                        )
+                );
+    }
+
+    private void validarReferenciaNoProcesada(
+            String referenciaCompra
+    ) {
+
+        Optional.of(
+                        movimientoSaldoGateway
+                                .existeReferenciaCompra(
+                                        referenciaCompra
+                                )
+                )
+                .filter(existe -> !existe)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "La compra ya fue procesada anteriormente"
+                        )
+                );
+    }
+
+    private void validarMovimientoDelUsuario(
+            MovimientoSaldo movimientoSaldo,
+            String idUsuario
+    ) {
+
+        Optional.ofNullable(
+                        movimientoSaldo.getIdUsuario()
+                )
+                .filter(idMovimiento ->
+                        idMovimiento.equals(idUsuario)
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El movimiento no pertenece al usuario"
+                        )
+                );
+    }
+
+    private void validarMovimientoDescontado(
+            MovimientoSaldo movimientoSaldo
+    ) {
+
+        Optional.ofNullable(
+                        movimientoSaldo.getEstado()
+                )
+                .filter(estado ->
+                        estado
+                                == EstadoMovimientoSaldo.DESCONTADO
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "El descuento ya fue revertido"
                         )
                 );
     }

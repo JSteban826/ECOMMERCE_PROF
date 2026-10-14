@@ -3,6 +3,7 @@ package com.ecommerce.auth.Infraestructure.entry_points;
 import com.ecommerce.auth.Domain.model.Usuario;
 
 import com.ecommerce.auth.Domain.usecase.UsuarioUseCase;
+import com.ecommerce.auth.Domain.model.MovimientoSaldo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -102,12 +103,27 @@ public class UsuarioController {
     @PutMapping("/{idUsuario}/saldo/descontar")
     public ResponseEntity<Usuario> descontarSaldo(
             @PathVariable String idUsuario,
-            @RequestBody BigDecimal valor
+            @RequestBody MovimientoSaldo movimientoSaldo
     ) {
+
         return ResponseEntity.ok(
                 usuarioUseCase.descontarSaldo(
                         idUsuario,
-                        valor
+                        movimientoSaldo.getValor(),
+                        movimientoSaldo.getReferenciaCompra()
+                )
+        );
+    }
+    @PutMapping("/{idUsuario}/saldo/revertir")
+    public ResponseEntity<Usuario> revertirDescuento(
+            @PathVariable String idUsuario,
+            @RequestBody MovimientoSaldo movimientoSaldo
+    ) {
+
+        return ResponseEntity.ok(
+                usuarioUseCase.revertirDescuento(
+                        idUsuario,
+                        movimientoSaldo.getReferenciaCompra()
                 )
         );
     }
