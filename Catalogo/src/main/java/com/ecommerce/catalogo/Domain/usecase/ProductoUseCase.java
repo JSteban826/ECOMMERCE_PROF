@@ -1,4 +1,5 @@
 package com.ecommerce.catalogo.Domain.usecase;
+import com.ecommerce.catalogo.Domain.exception.ErrorAplicacion;
 
 import com.ecommerce.catalogo.Domain.model.Producto;
 import com.ecommerce.catalogo.Domain.model.gateway.ProductoGateway;
@@ -17,8 +18,7 @@ public class ProductoUseCase {
 
         Producto productoValidado = Optional.ofNullable(producto)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Los datos del producto son obligatorios"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "DATOS_OBLIGATORIOS", "Los datos del producto son obligatorios"
                         )
                 );
 
@@ -40,8 +40,7 @@ public class ProductoUseCase {
 
         Producto productoValidado = Optional.ofNullable(producto)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Los datos del producto son obligatorios"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "DATOS_OBLIGATORIOS", "Los datos del producto son obligatorios"
                         )
                 );
 
@@ -70,8 +69,7 @@ public class ProductoUseCase {
                         )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe un producto con el ID: "
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "PRODUCTO_NO_ENCONTRADO", "No existe un producto con el ID: "
                                         + idProducto
                         )
                 );
@@ -98,8 +96,7 @@ public class ProductoUseCase {
         Optional.ofNullable(idProducto)
                 .filter(valor -> valor > 0)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del producto debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.FORMATO, "IDENTIFICADOR_INVALIDO", "El ID del producto debe ser mayor que cero"
                         )
                 );
     }
@@ -110,8 +107,7 @@ public class ProductoUseCase {
                 .filter(valor -> !valor.isBlank())
                 .filter(valor -> valor.length() >= 3)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El nombre debe tener mínimo 3 caracteres"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "NOMBRE_INVALIDO", "El nombre debe tener mínimo 3 caracteres"
                         )
                 );
     }
@@ -121,8 +117,7 @@ public class ProductoUseCase {
         Optional.ofNullable(descripcion)
                 .filter(valor -> !valor.isBlank())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La descripción del producto es obligatoria"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "DESCRIPCION_OBLIGATORIA", "La descripción del producto es obligatoria"
                         )
                 );
     }
@@ -134,8 +129,7 @@ public class ProductoUseCase {
                         valor.compareTo(BigDecimal.ZERO) > 0
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El precio debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "PRECIO_INVALIDO", "El precio debe ser mayor que cero"
                         )
                 );
     }
@@ -145,8 +139,7 @@ public class ProductoUseCase {
         Optional.ofNullable(stock)
                 .filter(valor -> valor >= 0)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El stock no puede ser negativo"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "STOCK_INVALIDO", "El stock no puede ser negativo"
                         )
                 );
     }
@@ -156,8 +149,7 @@ public class ProductoUseCase {
         Optional.ofNullable(imagenUrl)
                 .filter(valor -> !valor.isBlank())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La URL de la imagen es obligatoria"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "IMAGEN_OBLIGATORIA", "La URL de la imagen es obligatoria"
                         )
                 );
     }

@@ -1,4 +1,5 @@
 package com.ecommerce.auth.Domain.usecase;
+import com.ecommerce.auth.Domain.exception.ErrorAplicacion;
 
 import com.ecommerce.auth.Domain.model.EstadoMovimientoSaldo;
 import com.ecommerce.auth.Domain.model.MovimientoSaldo;
@@ -23,8 +24,7 @@ public class UsuarioUseCase {
 
         Usuario usuarioValidado = Optional.ofNullable(usuario)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Los datos del usuario son obligatorios"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "DATOS_OBLIGATORIOS", "Los datos del usuario son obligatorios"
                         )
                 );
 
@@ -41,7 +41,10 @@ public class UsuarioUseCase {
     public Usuario guardarUsuario(Usuario usuario) {
 
         validarUsuario(usuario);
-
+        if (usuario.getIdUsuario() != null) {
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "ID_NO_PERMITIDO",
+                    "No envíes idUsuario al crear");
+        }
         usuario.setSaldo(BigDecimal.ZERO);
 
         usuario.setClave(
@@ -57,8 +60,7 @@ public class UsuarioUseCase {
 
         Usuario usuarioValidado = Optional.ofNullable(usuario)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Los datos del usuario son obligatorios"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "DATOS_OBLIGATORIOS", "Los datos del usuario son obligatorios"
                         )
                 );
 
@@ -264,8 +266,7 @@ public class UsuarioUseCase {
                         )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe un usuario con el ID: "
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "USUARIO_NO_ENCONTRADO", "No existe un usuario con el ID: "
                                         + idUsuario
                         )
                 );
@@ -282,24 +283,18 @@ public class UsuarioUseCase {
                                 )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe un movimiento con la referencia: "
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "MOVIMIENTO_NO_ENCONTRADO", "No existe un movimiento con la referencia: "
                                         + referenciaCompra
                         )
                 );
     }
 
-    private void validarIdUsuario(
-            String idUsuario
-    ) {
-
-        Optional.ofNullable(idUsuario)
-                .filter(id -> !id.isBlank())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del usuario es obligatorio"
-                        )
-                );
+    private void validarIdUsuario(String idUsuario) {
+        if (idUsuario == null || !idUsuario.matches(
+                "(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.FORMATO, "IDENTIFICADOR_INVALIDO",
+                    "El identificador de usuario debe ser un UUID válido");
+        }
     }
 
     private void validarReferenciaCompra(
@@ -309,8 +304,7 @@ public class UsuarioUseCase {
         Optional.ofNullable(referenciaCompra)
                 .filter(valor -> !valor.isBlank())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La referencia de compra es obligatoria"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "REFERENCIA_OBLIGATORIA", "La referencia de compra es obligatoria"
                         )
                 );
     }
@@ -327,8 +321,7 @@ public class UsuarioUseCase {
                 )
                 .filter(existe -> !existe)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La compra ya fue procesada anteriormente"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "REFERENCIA_YA_PROCESADA", "La compra ya fue procesada anteriormente"
                         )
                 );
     }
@@ -345,8 +338,7 @@ public class UsuarioUseCase {
                         idMovimiento.equals(idUsuario)
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El movimiento no pertenece al usuario"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "MOVIMIENTO_USUARIO_INCOMPATIBLE", "El movimiento no pertenece al usuario"
                         )
                 );
     }
@@ -363,8 +355,7 @@ public class UsuarioUseCase {
                                 == EstadoMovimientoSaldo.DESCONTADO
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El descuento ya fue revertido"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "MOVIMIENTO_YA_REVERTIDO", "El descuento ya fue revertido"
                         )
                 );
     }
@@ -373,28 +364,19 @@ public class UsuarioUseCase {
 
         Optional.ofNullable(nombre)
                 .filter(valor -> !valor.isBlank())
-                .filter(valor -> valor.length() >= 3)
+                .filter(valor -> valor.length() >= 3 && valor.length() <= 100)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El nombre debe tener mínimo 3 caracteres"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "NOMBRE_INVALIDO", "El nombre debe tener entre 3 y 100 caracteres"
                         )
                 );
     }
 
     private void validarCorreo(String correo) {
-
-        Optional.ofNullable(correo)
-                .filter(valor -> !valor.isBlank())
-                .filter(valor ->
-                        valor.matches(
-                                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
-                        )
-                )
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El correo no es válido"
-                        )
-                );
+        if (correo == null || correo.isBlank() || correo.length() > 150
+                || !correo.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CORREO_INVALIDO",
+                    "El correo debe tener formato válido y máximo 150 caracteres");
+        }
     }
 
     private void validarClave(String clave) {
@@ -403,8 +385,7 @@ public class UsuarioUseCase {
                 .filter(valor -> !valor.isBlank())
                 .filter(valor -> valor.length() >= 8)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La clave debe tener mínimo 8 caracteres"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CLAVE_NO_CUMPLE_POLITICA", "La clave debe tener mínimo 8 caracteres"
                         )
                 );
     }
@@ -418,8 +399,7 @@ public class UsuarioUseCase {
                                 || valor.equals("USER")
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El rol debe ser ADMIN o USER"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "ROL_INVALIDO", "El rol debe ser ADMIN o USER"
                         )
                 );
     }
@@ -434,8 +414,7 @@ public class UsuarioUseCase {
                         valor.matches("\\d{10}")
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El número telefónico debe tener 10 dígitos"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "TELEFONO_INVALIDO", "El número telefónico debe tener 10 dígitos"
                         )
                 );
     }
@@ -446,8 +425,7 @@ public class UsuarioUseCase {
                 .filter(valor -> valor >= 18)
                 .filter(valor -> valor <= 120)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La edad debe estar entre 18 y 120 años"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "EDAD_FUERA_DE_RANGO", "La edad debe estar entre 18 y 120 años"
                         )
                 );
     }
@@ -463,8 +441,7 @@ public class UsuarioUseCase {
                         ) > 0
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El valor debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "MONTO_INVALIDO", "El valor debe ser mayor que cero"
                         )
                 );
     }
@@ -479,8 +456,7 @@ public class UsuarioUseCase {
                         saldo.compareTo(valor) >= 0
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Saldo insuficiente para realizar la compra"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "SALDO_INSUFICIENTE", "Saldo insuficiente para realizar la compra"
                         )
                 );
     }
@@ -501,16 +477,14 @@ public class UsuarioUseCase {
         Optional.ofNullable(correo)
                 .filter(valor -> !valor.isBlank())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El correo es obligatorio"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CAMPO_OBLIGATORIO", "El correo es obligatorio"
                         )
                 );
 
         Optional.ofNullable(clave)
                 .filter(valor -> !valor.isBlank())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La clave es obligatoria"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CAMPO_OBLIGATORIO", "La clave es obligatoria"
                         )
                 );
 

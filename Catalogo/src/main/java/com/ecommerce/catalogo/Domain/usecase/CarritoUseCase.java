@@ -1,4 +1,5 @@
 package com.ecommerce.catalogo.Domain.usecase;
+import com.ecommerce.catalogo.Domain.exception.ErrorAplicacion;
 
 import com.ecommerce.catalogo.Domain.model.Carrito;
 import com.ecommerce.catalogo.Domain.model.EstadoCarrito;
@@ -79,8 +80,7 @@ public class CarritoUseCase {
                                 )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El usuario no tiene un carrito activo"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "CARRITO_ACTIVO_NO_ENCONTRADO", "El usuario no tiene un carrito activo"
                         )
                 );
 
@@ -129,8 +129,13 @@ public class CarritoUseCase {
                         .map(ItemCarrito::getCantidad)
                         .orElse(0);
 
-        Integer nuevaCantidad =
-                cantidadActual + cantidad;
+        Integer nuevaCantidad;
+        try {
+            nuevaCantidad = Math.addExact(cantidadActual, cantidad);
+        } catch (ArithmeticException ex) {
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CANTIDAD_INVALIDA",
+                    "La cantidad acumulada excede el rango permitido");
+        }
 
         validarStock(
                 producto.getStock(),
@@ -332,15 +337,16 @@ public class CarritoUseCase {
 
         } catch (RuntimeException exception) {
 
-            compensarCompra(
-                    carrito,
-                    referenciaCompra
-            );
-
-            throw new IllegalArgumentException(
-                    "La compra no pudo completarse y el saldo fue revertido",
-                    exception
-            );
+            try {
+                compensarCompra(carrito, referenciaCompra);
+            } catch (RuntimeException falloCompensacion) {
+                exception.addSuppressed(falloCompensacion);
+                throw new ErrorAplicacion(ErrorAplicacion.Tipo.INTERNO, "COMPENSACION_NO_CONFIRMADA",
+                        "No se pudo confirmar la compensación. Revisa el movimiento antes de reintentar", exception);
+            }
+            if (exception instanceof ErrorAplicacion) throw exception;
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.INTERNO, "COMPRA_NO_COMPLETADA",
+                    "La compra falló; se ejecutó la compensación de saldo", exception);
         }
     }
 
@@ -389,8 +395,7 @@ public class CarritoUseCase {
         Optional.ofNullable(items)
                 .filter(lista -> !lista.isEmpty())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El carrito no contiene productos"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "CARRITO_VACIO", "El carrito no contiene productos"
                         )
                 );
     }
@@ -441,8 +446,7 @@ public class CarritoUseCase {
                         valor.compareTo(total) >= 0
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Saldo insuficiente para realizar la compra"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "SALDO_INSUFICIENTE", "Saldo insuficiente para realizar la compra"
                         )
                 );
     }
@@ -457,8 +461,7 @@ public class CarritoUseCase {
                         ) > 0
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El total de la compra debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "TOTAL_COMPRA_INVALIDO", "El total de la compra debe ser mayor que cero"
                         )
                 );
     }
@@ -487,8 +490,7 @@ public class CarritoUseCase {
                         )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe un carrito con el ID: "
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "CARRITO_NO_ENCONTRADO", "No existe un carrito con el ID: "
                                         + idCarrito
                         )
                 );
@@ -504,8 +506,7 @@ public class CarritoUseCase {
                         )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "No existe un producto con el ID: "
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "PRODUCTO_NO_ENCONTRADO", "No existe un producto con el ID: "
                                         + idProducto
                         )
                 );
@@ -524,8 +525,7 @@ public class CarritoUseCase {
                                 )
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El producto no se encuentra en el carrito"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "ITEM_NO_ENCONTRADO", "El producto no se encuentra en el carrito"
                         )
                 );
     }
@@ -541,8 +541,7 @@ public class CarritoUseCase {
                                 )
                 )
                 .map(carrito -> {
-                    throw new IllegalArgumentException(
-                            "El usuario ya tiene un carrito activo"
+                    throw new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "CARRITO_ACTIVO_EXISTENTE", "El usuario ya tiene un carrito activo"
                     );
                 });
     }
@@ -578,8 +577,7 @@ public class CarritoUseCase {
                                 estado == EstadoCarrito.ACTIVO
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El carrito no se encuentra activo"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "CARRITO_NO_ACTIVO", "El carrito no se encuentra activo"
                         )
                 );
     }
@@ -595,23 +593,17 @@ public class CarritoUseCase {
                                 stockDisponible >= cantidad
                 )
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Stock insuficiente para la cantidad solicitada"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.CONFLICTO, "STOCK_INSUFICIENTE", "Stock insuficiente para la cantidad solicitada"
                         )
                 );
     }
 
-    private void validarIdUsuario(
-            String idUsuario
-    ) {
-
-        Optional.ofNullable(idUsuario)
-                .filter(valor -> !valor.isBlank())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del usuario es obligatorio"
-                        )
-                );
+    private void validarIdUsuario(String idUsuario) {
+        if (idUsuario == null || !idUsuario.matches(
+                "(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.FORMATO, "IDENTIFICADOR_INVALIDO",
+                    "El identificador de usuario debe ser un UUID válido");
+        }
     }
     private void ejecutarDescuento(
             Carrito carrito,
@@ -637,10 +629,7 @@ public class CarritoUseCase {
                     carrito
             );
 
-            throw new IllegalArgumentException(
-                    "No fue posible descontar el saldo del usuario",
-                    exception
-            );
+            throw exception;
         }
     }
 
@@ -652,8 +641,7 @@ public class CarritoUseCase {
         Optional.ofNullable(idCarrito)
                 .filter(valor -> valor > 0)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del carrito debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.FORMATO, "IDENTIFICADOR_INVALIDO", "El ID del carrito debe ser mayor que cero"
                         )
                 );
     }
@@ -665,8 +653,7 @@ public class CarritoUseCase {
         Optional.ofNullable(idProducto)
                 .filter(valor -> valor > 0)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "El ID del producto debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.FORMATO, "IDENTIFICADOR_INVALIDO", "El ID del producto debe ser mayor que cero"
                         )
                 );
     }
@@ -678,8 +665,7 @@ public class CarritoUseCase {
         Optional.ofNullable(cantidad)
                 .filter(valor -> valor > 0)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "La cantidad debe ser mayor que cero"
+                        new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CANTIDAD_INVALIDA", "La cantidad debe ser mayor que cero"
                         )
                 );
     }

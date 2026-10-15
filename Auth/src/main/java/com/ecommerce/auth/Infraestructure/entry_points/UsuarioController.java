@@ -1,133 +1,60 @@
 package com.ecommerce.auth.Infraestructure.entry_points;
-
 import com.ecommerce.auth.Domain.model.Usuario;
-
-import com.ecommerce.auth.Domain.usecase.UsuarioUseCase;
 import com.ecommerce.auth.Domain.model.MovimientoSaldo;
+import com.ecommerce.auth.Domain.usecase.UsuarioUseCase;
+import com.ecommerce.auth.Infraestructure.entry_points.dto.UsuarioResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
-
 import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/ecommerce/usuarios")
 @RequiredArgsConstructor
 public class UsuarioController {
-
     private final UsuarioUseCase usuarioUseCase;
-
     @PostMapping("/save")
-    public ResponseEntity<Usuario> guardarUsuario(@RequestBody Usuario usuario) {
-
-        Usuario usuarioGuardado = usuarioUseCase.guardarUsuario(usuario);
-
-        return new ResponseEntity<>(usuarioGuardado, HttpStatus.OK);
+    public ResponseEntity<UsuarioResponse> guardarUsuario(@RequestBody Usuario usuario) {
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.guardarUsuario(usuario)));
     }
-
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscarUsuario(@PathVariable String id) {
-
-        Usuario usuario = usuarioUseCase.buscarUsuario(id);
-
-        return new ResponseEntity<>(usuario, HttpStatus.OK);
+    public ResponseEntity<UsuarioResponse> buscarUsuario(@PathVariable("id") String id) {
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.buscarUsuario(id)));
     }
-
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable String id, @RequestBody Usuario usuario) {
-
+    public ResponseEntity<UsuarioResponse> actualizarUsuario(@PathVariable("id") String id,
+            @RequestBody Usuario usuario) {
         usuario.setIdUsuario(id);
-
-        Usuario usuarioActualizado = usuarioUseCase.actualizarUsuario(usuario);
-
-        return new ResponseEntity<>(usuarioActualizado, HttpStatus.OK);
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.actualizarUsuario(usuario)));
     }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> eliminarUsuario(@PathVariable String id) {
-
+    public ResponseEntity<String> eliminarUsuario(@PathVariable("id") String id) {
         usuarioUseCase.eliminarUsuario(id);
-
-        return new ResponseEntity<>("Usuario eliminado correctamente", HttpStatus.OK
-        );
+        return ResponseEntity.ok("Usuario eliminado correctamente");
     }
-
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Usuario usuario) {
-
-        try {
-
-            String mensaje = usuarioUseCase.login(
-                    usuario.getCorreo(),
-                    usuario.getClave()
-            );
-
-            return new ResponseEntity<>(mensaje, HttpStatus.OK
-            );
-
-        } catch (IllegalArgumentException e) {
-
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST
-            );
-
-        } catch (RuntimeException e) {
-
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED
-            );
-        }
+    public ResponseEntity<String> login(@RequestBody Usuario usuario) {
+        return ResponseEntity.ok(usuarioUseCase.login(usuario.getCorreo(), usuario.getClave()));
     }
     @GetMapping("/{idUsuario}/saldo")
-    public ResponseEntity<BigDecimal> consultarSaldo(
-            @PathVariable String idUsuario
-    ) {
-        return ResponseEntity.ok(
-                usuarioUseCase.consultarSaldo(idUsuario)
-        );
+    public ResponseEntity<BigDecimal> consultarSaldo(@PathVariable("idUsuario") String idUsuario) {
+        return ResponseEntity.ok(usuarioUseCase.consultarSaldo(idUsuario));
     }
-
     @PutMapping("/{idUsuario}/saldo/recargar")
-    public ResponseEntity<Usuario> recargarSaldo(
-            @PathVariable String idUsuario,
-            @RequestBody BigDecimal valor
-    ) {
-        return ResponseEntity.ok(
-                usuarioUseCase.recargarSaldo(
-                        idUsuario,
-                        valor
-                )
-        );
+    public ResponseEntity<UsuarioResponse> recargarSaldo(@PathVariable("idUsuario") String idUsuario,
+            @RequestBody BigDecimal valor) {
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.recargarSaldo(idUsuario, valor)));
     }
-
     @PutMapping("/{idUsuario}/saldo/descontar")
-    public ResponseEntity<Usuario> descontarSaldo(
-            @PathVariable String idUsuario,
-            @RequestBody MovimientoSaldo movimientoSaldo
-    ) {
-
-        return ResponseEntity.ok(
-                usuarioUseCase.descontarSaldo(
-                        idUsuario,
-                        movimientoSaldo.getValor(),
-                        movimientoSaldo.getReferenciaCompra()
-                )
-        );
+    public ResponseEntity<UsuarioResponse> descontarSaldo(@PathVariable("idUsuario") String idUsuario,
+            @RequestBody MovimientoSaldo movimiento) {
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.descontarSaldo(idUsuario,
+                movimiento.getValor(), movimiento.getReferenciaCompra())));
     }
     @PutMapping("/{idUsuario}/saldo/revertir")
-    public ResponseEntity<Usuario> revertirDescuento(
-            @PathVariable String idUsuario,
-            @RequestBody MovimientoSaldo movimientoSaldo
-    ) {
-
-        return ResponseEntity.ok(
-                usuarioUseCase.revertirDescuento(
-                        idUsuario,
-                        movimientoSaldo.getReferenciaCompra()
-                )
-        );
+    public ResponseEntity<UsuarioResponse> revertirDescuento(@PathVariable("idUsuario") String idUsuario,
+            @RequestBody MovimientoSaldo movimiento) {
+        return ResponseEntity.ok(UsuarioResponse.from(usuarioUseCase.revertirDescuento(idUsuario,
+                movimiento.getReferenciaCompra())));
     }
-
-
 }
-

@@ -6,6 +6,7 @@ import com.ecommerce.auth.Domain.model.gateway.UsuarioGateway;
 import com.ecommerce.auth.Infraestructure.driver_adapter.UsuarioData;
 import com.ecommerce.auth.Infraestructure.mapper.MapperUsuario;
 import lombok.RequiredArgsConstructor;
+import com.ecommerce.auth.Domain.exception.ErrorAplicacion;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -30,15 +31,14 @@ public class UsuarioDataGatewayImpl implements UsuarioGateway {
 
         return repository.findById(idUsuario)
                 .map(mapperUsuario::toUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "USUARIO_NO_ENCONTRADO", "Usuario no encontrado"));
     }
 
     @Override
     public Usuario actualizarUsuario(Usuario usuario) {
 
         if (!repository.existsById(usuario.getIdUsuario())) {
-            throw new RuntimeException("Usuario con ID " + usuario.getIdUsuario() + " no existe"
-            );
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "USUARIO_NO_ENCONTRADO", "Usuario no encontrado");
         }
 
         UsuarioData usuarioData = mapperUsuario.toData(usuario);
@@ -51,7 +51,7 @@ public class UsuarioDataGatewayImpl implements UsuarioGateway {
     public void eliminarPorIdUsuario(String idUsuario) {
 
         if (!repository.existsById(idUsuario)) {
-            throw new RuntimeException("Usuario con ID " + idUsuario + " no existe");
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.NO_ENCONTRADO, "USUARIO_NO_ENCONTRADO", "Usuario no encontrado");
         }
 
         repository.deleteById(idUsuario);
@@ -60,13 +60,12 @@ public class UsuarioDataGatewayImpl implements UsuarioGateway {
     @Override
     public Usuario login(String correo, String clave) {
 
-        UsuarioData usuarioData = repository.findByCorreo(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        UsuarioData usuarioData = repository.findByCorreo(correo).orElseThrow(() -> new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CREDENCIALES_INVALIDAS", "Correo o contraseña incorrectos"));
 
         Boolean claveCorrecta = encrypterGateway.checkPass(clave, usuarioData.getClave());
 
         if (!claveCorrecta) {
-            throw new RuntimeException("Clave incorrecta");
+            throw new ErrorAplicacion(ErrorAplicacion.Tipo.VALIDACION, "CREDENCIALES_INVALIDAS", "Correo o contraseña incorrectos");
         }
 
         return mapperUsuario.toUsuario(usuarioData);
