@@ -3,11 +3,14 @@ package com.ecommerce.auth.Infraestructure.entry_points;
 import com.ecommerce.auth.Domain.model.Usuario;
 
 import com.ecommerce.auth.Domain.usecase.UsuarioUseCase;
+import com.ecommerce.auth.Domain.model.MovimientoSaldo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/ecommerce/usuarios")
@@ -75,5 +78,56 @@ public class UsuarioController {
             );
         }
     }
+    @GetMapping("/{idUsuario}/saldo")
+    public ResponseEntity<BigDecimal> consultarSaldo(
+            @PathVariable String idUsuario
+    ) {
+        return ResponseEntity.ok(
+                usuarioUseCase.consultarSaldo(idUsuario)
+        );
+    }
+
+    @PutMapping("/{idUsuario}/saldo/recargar")
+    public ResponseEntity<Usuario> recargarSaldo(
+            @PathVariable String idUsuario,
+            @RequestBody BigDecimal valor
+    ) {
+        return ResponseEntity.ok(
+                usuarioUseCase.recargarSaldo(
+                        idUsuario,
+                        valor
+                )
+        );
+    }
+
+    @PutMapping("/{idUsuario}/saldo/descontar")
+    public ResponseEntity<Usuario> descontarSaldo(
+            @PathVariable String idUsuario,
+            @RequestBody MovimientoSaldo movimientoSaldo
+    ) {
+
+        return ResponseEntity.ok(
+                usuarioUseCase.descontarSaldo(
+                        idUsuario,
+                        movimientoSaldo.getValor(),
+                        movimientoSaldo.getReferenciaCompra()
+                )
+        );
+    }
+    @PutMapping("/{idUsuario}/saldo/revertir")
+    public ResponseEntity<Usuario> revertirDescuento(
+            @PathVariable String idUsuario,
+            @RequestBody MovimientoSaldo movimientoSaldo
+    ) {
+
+        return ResponseEntity.ok(
+                usuarioUseCase.revertirDescuento(
+                        idUsuario,
+                        movimientoSaldo.getReferenciaCompra()
+                )
+        );
+    }
+
+
 }
 
