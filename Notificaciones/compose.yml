@@ -1,0 +1,17 @@
+services:
+  notificaciones:
+    build: .
+    env_file: .env
+    environment:
+      SERVER_PORT: 8083
+    ports:
+      - "127.0.0.1:8083:8083"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+# SMSGate y James son dependencias externas. No se simulan ni se configuran silenciosamente.

@@ -1,0 +1,324 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Notificaciones ECOMMERCE",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8083"
+    }
+  ],
+  "security": [
+    {
+      "ApiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Proceso activo; no valida proveedores"
+          }
+        }
+      }
+    },
+    "/api/notificaciones/sms": {
+      "post": {
+        "summary": "Solicitar envío sms",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "telefono",
+                  "mensaje"
+                ],
+                "properties": {
+                  "telefono": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "mensaje": {
+                    "type": "string",
+                    "maxLength": 1600
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aceptación reportada por proveedor; no confirma entrega",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "solicitudId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "canal": {
+                      "type": "string",
+                      "enum": [
+                        "SMS",
+                        "EMAIL"
+                      ]
+                    },
+                    "estado": {
+                      "type": "string",
+                      "enum": [
+                        "ACEPTADO_POR_PROVEEDOR"
+                      ]
+                    },
+                    "proveedorId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fecha": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada HTTP inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Regla de dominio inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Rechazo o respuesta inválida del proveedor",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Proveedor no disponible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Resultado incierto; verificar antes de reintentar",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notificaciones/email": {
+      "post": {
+        "summary": "Solicitar envío email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "destinatario",
+                  "asunto",
+                  "mensaje"
+                ],
+                "properties": {
+                  "destinatario": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254
+                  },
+                  "asunto": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "mensaje": {
+                    "type": "string",
+                    "maxLength": 100000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aceptación reportada por proveedor; no confirma entrega",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "solicitudId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "canal": {
+                      "type": "string",
+                      "enum": [
+                        "SMS",
+                        "EMAIL"
+                      ]
+                    },
+                    "estado": {
+                      "type": "string",
+                      "enum": [
+                        "ACEPTADO_POR_PROVEEDOR"
+                      ]
+                    },
+                    "proveedorId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "fecha": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Entrada HTTP inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Regla de dominio inválida",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Rechazo o respuesta inválida del proveedor",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Proveedor no disponible",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Resultado incierto; verificar antes de reintentar",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

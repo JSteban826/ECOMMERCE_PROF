@@ -1,0 +1,75 @@
+{
+  "info": {
+    "name": "ECOMMERCE - Notificaciones",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "apiKey",
+      "value": "REEMPLAZAR"
+    },
+    {
+      "key": "telefono",
+      "value": "REEMPLAZAR_POR_TU_NUMERO"
+    },
+    {
+      "key": "email",
+      "value": "REEMPLAZAR_POR_TU_EMAIL"
+    }
+  ],
+  "item": [
+    {
+      "name": "SMS autorizado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"telefono\": \"{{telefono}}\",\n  \"mensaje\": \"Prueba autorizada desde Notificaciones\"\n}"
+        },
+        "url": "{{baseUrl}}/api/notificaciones/sms"
+      }
+    },
+    {
+      "name": "Email autorizado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"destinatario\": \"{{email}}\",\n  \"asunto\": \"Prueba Notificaciones\",\n  \"mensaje\": \"Prueba autorizada\"\n}"
+        },
+        "url": "{{baseUrl}}/api/notificaciones/email"
+      }
+    },
+    {
+      "name": "Health - solo proceso",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      }
+    }
+  ]
+}

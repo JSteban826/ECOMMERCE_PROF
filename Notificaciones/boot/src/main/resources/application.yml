@@ -1,0 +1,32 @@
+server:
+  port: ${SERVER_PORT:8083}
+  error:
+    include-message: never
+    include-stacktrace: never
+spring:
+  application:
+    name: notificaciones
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    default-encoding: UTF-8
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+      mail.smtp.starttls.required: ${SMTP_STARTTLS:true}
+      mail.smtp.ssl.enable: ${SMTP_SSL:false}
+      mail.smtp.ssl.checkserveridentity: true
+      mail.smtp.connectiontimeout: ${SMTP_CONNECT_TIMEOUT_MS:5000}
+      mail.smtp.timeout: ${SMTP_READ_TIMEOUT_MS:10000}
+      mail.smtp.writetimeout: ${SMTP_WRITE_TIMEOUT_MS:10000}
+notificaciones:
+  api-key: ${NOTIFICACIONES_API_KEY}
+  remitente: ${EMAIL_FROM}
+  sms:
+    base-url: ${SMSGATE_BASE_URL}
+    username: ${SMSGATE_USERNAME}
+    password: ${SMSGATE_PASSWORD}
+    connect-timeout-ms: ${SMSGATE_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${SMSGATE_READ_TIMEOUT_MS:15000}
